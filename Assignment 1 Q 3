@@ -1,0 +1,81 @@
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+def high_pass_filter(image):
+    """
+    Apply a high-pass filter (edge detection) using a Laplacian kernel.
+    """
+    # Define a Laplacian kernel for edge detection
+    kernel = np.array([[-1, -1, -1],
+                       [-1,  8, -1],
+                       [-1, -1, -1]])
+    
+    # Apply the kernel to the image using filter2D
+    high_pass = cv2.filter2D(image, -1, kernel)
+    return high_pass
+
+def low_pass_filter(image):
+    """
+    Apply a low-pass filter (Gaussian blur) to smooth the image.
+    """
+    # Apply GaussianBlur with a 9x9 kernel
+    low_pass = cv2.GaussianBlur(image, (9, 9), 0)
+    return low_pass
+
+def combine_images(image1, image2):
+    """
+    Combine two images by adding their pixel values.
+    """
+    # Ensure images are of the same size and type
+    return cv2.addWeighted(image1, 0.5, image2, 0.5, 0)
+
+def display_images(images, titles):
+    """
+    Display multiple images using matplotlib in a grid.
+    """
+    plt.figure(figsize=(15, 10))
+    for i, (img, title) in enumerate(zip(images, titles)):
+        plt.subplot(2, 3, i + 1)
+        if len(img.shape) == 3:  # Color image
+            plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        else:  # Grayscale image
+            plt.imshow(img, cmap='gray')
+        plt.title(title)
+        plt.axis("off")
+    plt.tight_layout()
+    plt.show()
+
+def main():
+    # Load two images
+    image1_path = "C:\\Users\\rajat\\OneDrive\\Pictures\\Camera Roll\\eci image.jpg"  # Replace with the path to your first image
+    image2_path = "C:\\Users\\rajat\\OneDrive\\Pictures\\Camera Roll\\WIN_20241121_23_53_40_Pro.jpg"  # Replace with the path to your second image
+    image1 = cv2.imread(image1_path)
+    image2 = cv2.imread(image2_path)
+
+    if image1 is None or image2 is None:
+        print("Error: Unable to load one or both images. Check file paths.")
+        return
+
+    # Resize images to the same size for combination
+    image2 = cv2.resize(image2, (image1.shape[1], image1.shape[0]))
+
+    # Apply high-pass filter to the first image
+    high_pass_image = high_pass_filter(image1)
+
+    # Apply low-pass filter to the second image
+    low_pass_image = low_pass_filter(image2)
+
+    # Combine the high-pass and low-pass filtered images
+    combined_image = combine_images(high_pass_image, low_pass_image)
+
+    # Display all the images
+    images = [image1, high_pass_image, image2, low_pass_image, combined_image]
+    titles = ["Original Image 1", "High-Pass Filtered Image", 
+              "Original Image 2", "Low-Pass Filtered Image", 
+              "Combined Image"]
+
+    display_images(images, titles)
+
+if __name__ == "__main__":
+    main()
