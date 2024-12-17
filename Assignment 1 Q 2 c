@@ -1,3 +1,4 @@
+#Sobel Filter
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -90,3 +91,77 @@ def main():
 # Run the main function
 if __name__ == "__main__":
     main()
+
+#Canny Edge
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Function to capture an image from the webcam
+def capture_image(camera_index=0):
+    cap = cv2.VideoCapture(camera_index)  # Open the webcam
+    if not cap.isOpened():
+        print("Error: Could not open webcam.")
+        return None
+    
+    print("Press 'SPACE' to capture an image, 'ESC' to exit.")
+    while True:
+        ret, frame = cap.read()  # Read a frame
+        if not ret:
+            print("Error: Unable to capture video.")
+            break
+
+        cv2.imshow("Press SPACE to Capture", frame)
+
+        # Wait for a key press
+        key = cv2.waitKey(1) & 0xFF
+        if key == 27:  # ESC key to exit
+            cap.release()
+            cv2.destroyAllWindows()
+            return None
+        elif key == 32:  # SPACE key to capture
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+    return frame
+
+# Function to apply Canny edge detection
+def canny_edge_detector(image, thresholds):
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # Convert to grayscale
+    edges = cv2.Canny(gray_image, thresholds[0], thresholds[1])  # Apply Canny edge detection
+    return edges
+
+# Function to display images in a 2x4 grid
+def display_in_grid(original_image, edge_images, grid_shape=(2, 4)):
+    fig, axes = plt.subplots(grid_shape[0], grid_shape[1], figsize=(12, 6))
+    axes = axes.flatten()  # Flatten the grid for easy iteration
+    
+    # Display the original image in the first slot
+    axes[0].imshow(cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB))
+    axes[0].set_title("Original Image")
+    axes[0].axis('off')
+
+    # Display edge images in the remaining slots
+    for i, edge_image in enumerate(edge_images):
+        axes[i + 1].imshow(edge_image, cmap='gray')
+        axes[i + 1].set_title(f"Canny Edges {i+1}")
+        axes[i + 1].axis('off')
+
+    plt.tight_layout()
+    plt.show()
+
+# Main script
+if __name__ == "__main__":
+    # Step 1: Capture an image
+    image = capture_image(camera_index=0)  # Try 1, 2 if the camera doesn't work
+    if image is None:
+        print("No image captured. Exiting.")
+        exit()
+
+    # Step 2: Generate multiple edge images with varying thresholds
+    thresholds_list = [(50, 150), (75, 175), (100, 200), (125, 225), (150, 250), (175, 275), (200, 300)]
+    edge_images = [canny_edge_detector(image, thresholds) for thresholds in thresholds_list]
+
+    # Step 3: Display the original and edge-detected images in a 2x4 grid
+    display_in_grid(image, edge_images, grid_shape=(2, 4))
