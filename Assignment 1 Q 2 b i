@@ -1,0 +1,97 @@
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+def capture_image(camera_index=0):
+    """
+    Captures an image using the webcam.
+    :param camera_index: Index of the camera (0 or 1 based on availability)
+    :return: Captured image
+    """
+    cap = cv2.VideoCapture(camera_index)
+    if not cap.isOpened():
+        print(f"Error: Unable to access camera index {camera_index}")
+        return None
+    
+    print("Press 's' to capture the image and 'q' to quit without capturing.")
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            print("Error: Unable to read from the camera")
+            break
+        
+        cv2.imshow("Press 's' to save image", frame)
+        
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('s'):  # Press 's' to save
+            image = frame
+            print("Image captured successfully.")
+            break
+        elif key == ord('q'):  # Press 'q' to quit
+            image = None
+            print("Exiting without capturing.")
+            break
+    
+    cap.release()
+    cv2.destroyAllWindows()
+    return image
+
+def threshold_image(image, threshold):
+    """
+    Converts the image to grayscale and applies a threshold to produce a black and white image.
+    :param image: Input image
+    :param threshold: Threshold value
+    :return: Thresholded black-and-white image
+    """
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    _, thresh_img = cv2.threshold(gray, threshold, 255, cv2.THRESH_BINARY)
+    return thresh_img
+
+def display_in_grid(image, n=2, m=4, thresholds=[50, 100, 150, 200]):
+    """
+    Displays variations of thresholded images in a grid.
+    :param image: Original captured image
+    :param n: Number of rows in the grid
+    :param m: Number of columns in the grid
+    :param thresholds: List of thresholds to apply (default: 4 thresholds for 2x4 grid)
+    """
+    plt.figure(figsize=(12, 6))
+    total_images = n * m
+    images = []
+
+    # Apply thresholding for each threshold value
+    for t in thresholds:
+        thresh_img = threshold_image(image, t)
+        images.append((thresh_img, f"Threshold: {t}"))
+    
+    # Repeat images to fill the grid if needed
+    while len(images) < total_images:
+        images.extend(images)
+
+    # Plot images in a grid
+    for i in range(total_images):
+        plt.subplot(n, m, i + 1)
+        plt.imshow(images[i][0], cmap='gray')
+        plt.title(images[i][1])
+        plt.axis('off')
+    
+    plt.tight_layout()
+    plt.show()
+
+def main():
+    # Capture image from webcam
+    camera_index = 0  # Change to 1 if the first camera doesn't work
+    image = capture_image(camera_index)
+    
+    if image is None:
+        print("No image captured. Exiting...")
+        return
+    
+    # Define thresholds for the grid
+    thresholds = [50, 100, 150, 200]
+    
+    # Display the thresholded images in a grid
+    display_in_grid(image, n=2, m=4, thresholds=thresholds)
+
+if __name__ == "__main__":
+    main()
