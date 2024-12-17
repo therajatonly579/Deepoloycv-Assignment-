@@ -1,0 +1,71 @@
+import cv2
+import matplotlib.pyplot as plt
+
+def capture_image(camera_index=0):
+    """
+    Captures an image using the specified camera index.
+    """
+    cap = cv2.VideoCapture(camera_index)
+    if not cap.isOpened():
+        print(f"Unable to access camera index {camera_index}.")
+        return None
+
+    print("Press 's' to capture the image and 'q' to quit.")
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            print("Failed to capture image. Exiting.")
+            break
+
+        cv2.imshow("Press 's' to Save or 'q' to Quit", frame)
+        key = cv2.waitKey(1)
+        if key == ord('s'):  # Press 's' to save and exit
+            cv2.destroyAllWindows()
+            cap.release()
+            return frame
+        elif key == ord('q'):  # Press 'q' to quit
+            print("Exiting without saving.")
+            cv2.destroyAllWindows()
+            cap.release()
+            return None
+
+def grey_scale(image):
+    """
+    Converts a given image to grayscale.
+    """
+    return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+def display_grid(image, n=2, m=4):
+    """
+    Displays the grayscale image in an n x m grid.
+    """
+    grey_image = grey_scale(image)
+    
+    # Create a grid plot
+    fig, axes = plt.subplots(n, m, figsize=(10, 5))
+    fig.suptitle("Grayscale Image in 2x4 Grid", fontsize=16)
+
+    # Plot the same grayscale image in all grid cells
+    for i in range(n):
+        for j in range(m):
+            axes[i, j].imshow(grey_image, cmap='gray')
+            axes[i, j].axis('off')  # Turn off axes for clarity
+
+    plt.tight_layout()
+    plt.subplots_adjust(top=0.85)  # Adjust to fit the title
+    plt.show()
+
+def main():
+    """
+    Main function to capture, process, and display the image.
+    """
+    # Try to capture an image using the webcam
+    image = capture_image(0)  # Change to 1, 2, etc. if necessary
+    if image is not None:
+        print("Image captured successfully. Displaying in grid...")
+        display_grid(image)
+    else:
+        print("No image captured. Exiting.")
+
+if __name__ == "__main__":
+    main()
