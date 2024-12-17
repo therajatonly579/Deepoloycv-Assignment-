@@ -1,0 +1,80 @@
+import cv2
+import numpy as np
+
+# Function to capture an image from the camera
+def capture_image(camera_index=0):
+    cap = cv2.VideoCapture(camera_index)  # Open camera (0 for default)
+    if not cap.isOpened():
+        print("Error: Could not open camera!")
+        return None
+
+    print("Press 's' to save the image.")
+    while True:
+        ret, frame = cap.read()  # Capture frame
+        if not ret:
+            print("Error: Could not read frame.")
+            break
+
+        cv2.imshow("Press 's' to capture", frame)  # Display the camera feed
+        key = cv2.waitKey(1) & 0xFF
+
+        if key == ord('s'):  # Press 's' to save the frame
+            print("Image captured!")
+            cap.release()
+            cv2.destroyAllWindows()
+            return frame
+
+    cap.release()
+    cv2.destroyAllWindows()
+    return None
+
+# Function to threshold the image into 8 regions and 16 grey colors
+def threshold_image(image):
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # Convert to grayscale
+    thresholds = []  # List to store thresholded images
+    
+    # Divide the range 0-255 into 8 equal regions
+    step_size = 32  # 256/8 = 32
+    for i in range(8):
+        lower_bound = i * step_size
+        upper_bound = (i + 1) * step_size - 1
+
+        # Threshold the image: pixels within the range are set to mid-grey value
+        _, thresh = cv2.threshold(gray_image, lower_bound, upper_bound, cv2.THRESH_BINARY)
+        thresholds.append(thresh)
+    return thresholds
+
+# Function to display thresholded images in a 2x4 grid
+def display_in_grid(images, n=2, m=4):
+    # Resize images for uniform grid display
+    resized_images = [cv2.resize(img, (200, 200)) for img in images]
+
+    # Combine images in a grid
+    grid_rows = []
+    for i in range(n):
+        row = np.hstack(resized_images[i*m : (i+1)*m])  # Combine horizontally
+        grid_rows.append(row)
+    
+    grid_image = np.vstack(grid_rows)  # Combine rows vertically
+
+    # Display the grid
+    cv2.imshow("2x4 Grid of Thresholded Images", grid_image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+# Main function
+def main():
+    # Step 1: Capture image
+    image = capture_image(0)  # Use camera 0; change to 1 or 2 if needed
+    if image is None:
+        print("Failed to capture image. Exiting...")
+        return
+
+    # Step 2: Threshold image into 8 regions (16 grey colors)
+    thresholds = threshold_image(image)
+
+    # Step 3: Display thresholded images in a 2x4 grid
+    display_in_grid(thresholds, n=2, m=4)
+
+if __name__ == "__main__":
+    main()
