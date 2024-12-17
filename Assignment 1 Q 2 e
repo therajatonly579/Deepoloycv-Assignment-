@@ -1,0 +1,104 @@
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+def capture_image(camera_index=0):
+    """
+    Capture an image from the webcam.
+    """
+    cap = cv2.VideoCapture(camera_index)
+    if not cap.isOpened():
+        print("Error: Could not access the camera.")
+        return None
+
+    print("Press 'SPACE' to capture the image and 'ESC' to exit.")
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            print("Error: Unable to read from the camera.")
+            break
+
+        # Show live feed
+        cv2.imshow("Press SPACE to Capture", frame)
+
+        key = cv2.waitKey(1)
+        if key == 32:  # SPACE key
+            captured_image = frame
+            break
+        elif key == 27:  # ESC key
+            cap.release()
+            cv2.destroyAllWindows()
+            return None
+
+    cap.release()
+    cv2.destroyAllWindows()
+    return captured_image
+
+def apply_gaussian_filter(image, kernel_size=5, sigma=1.0):
+    """
+    Apply a Gaussian filter to the image using a custom kernel.
+    """
+    kernel = create_gaussian_kernel(kernel_size, sigma)
+    filtered_image = cv2.filter2D(image, -1, kernel)
+    return filtered_image
+
+def create_gaussian_kernel(size, sigma):
+    """
+    Create a Gaussian kernel (2D) of the given size and standard deviation.
+    """
+    if size % 2 == 0:
+        size += 1
+
+    kernel = np.fromfunction(
+        lambda x, y: (1 / (2 * np.pi * sigma ** 2)) *
+                     np.exp(-((x - (size - 1) / 2) ** 2 + (y - (size - 1) / 2) ** 2) / (2 * sigma ** 2)),
+        (size, size)
+    )
+    return kernel / np.sum(kernel)  # Normalize the kernel
+
+def apply_sharpening(image):
+    """
+    Apply sharpening to the image using a sharpening kernel.
+    """
+    sharpening_kernel = np.array([[0, -1, 0],
+                                  [-1, 5, -1],
+                                  [0, -1, 0]], dtype=np.float32)
+    sharpened_image = cv2.filter2D(image, -1, sharpening_kernel)
+    return sharpened_image
+
+def display_in_grid(images, titles, n=2, m=4):
+    """
+    Display images in a grid (2x4).
+    """
+    plt.figure(figsize=(12, 6))
+    for i in range(len(images)):
+        plt.subplot(n, m, i + 1)
+        plt.imshow(cv2.cvtColor(images[i], cv2.COLOR_BGR2RGB))  # Convert BGR to RGB
+        plt.title(titles[i])
+        plt.axis('off')
+    plt.tight_layout()
+    plt.show()
+
+def main():
+    # Step 1: Capture an image
+    image = capture_image(camera_index=0)
+    if image is None:
+        print("No image captured. Exiting.")
+        return
+
+    # Step 2: Apply Gaussian filter (blur) and sharpening
+    gaussian_kernels = [3, 5, 7, 9]
+    blurred_images = [apply_gaussian_filter(image, k) for k in gaussian_kernels]
+
+    # Apply sharpening to the most blurred image (kernel=9)
+    sharpened_image = apply_sharpening(blurred_images[-1])
+
+    # Step 3: Display images
+    images = [image] + blurred_images + [sharpened_image]
+    titles = ["Original"] + [f"Gaussian Blur (Kernel={k})" for k in gaussian_kernels] + ["Sharpened Image"]
+
+    # Display in a 2x4 grid
+    display_in_grid(images, titles, n=2, m=4)
+
+if __name__ == "__main__":
+    main()
